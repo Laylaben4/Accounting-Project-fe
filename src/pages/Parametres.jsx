@@ -3,7 +3,8 @@ import { Save } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
+import { Input, inputClassName } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { TVA_RATES } from "@/data/planComptable";
@@ -31,10 +32,11 @@ export default function Parametres() {
   const [settings, setSettings] = useState(INITIAL_SETTINGS);
   const [saved, setSaved] = useState(false);
 
-  const update = (field) => (event) => {
+  const updateDate = (field) => (value) => {
     setSaved(false);
-    setSettings((current) => ({ ...current, [field]: event.target.value }));
+    setSettings((current) => ({ ...current, [field]: value }));
   };
+  const update = (field) => (event) => updateDate(field)(event.target.value);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -77,10 +79,20 @@ export default function Parametres() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
             <Field id="fiscalStart" label="Début d'exercice">
-              <Input id="fiscalStart" type="date" value={settings.fiscalStart} onChange={update("fiscalStart")} />
+              <DateInput
+                id="fiscalStart"
+                inputClassName={inputClassName}
+                value={settings.fiscalStart}
+                onChange={updateDate("fiscalStart")}
+              />
             </Field>
             <Field id="fiscalEnd" label="Fin d'exercice">
-              <Input id="fiscalEnd" type="date" value={settings.fiscalEnd} onChange={update("fiscalEnd")} />
+              <DateInput
+                id="fiscalEnd"
+                inputClassName={inputClassName}
+                value={settings.fiscalEnd}
+                onChange={updateDate("fiscalEnd")}
+              />
             </Field>
             <Field id="defaultTva" label="Taux de TVA par défaut">
               <Select id="defaultTva" value={settings.defaultTva} onChange={update("defaultTva")}>

@@ -1,13 +1,14 @@
 import { memo, useEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DateInput } from "@/components/ui/date-input";
 import { ACCOUNT_CLASSES, TVA_RATES } from "@/data/planComptable";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const COLUMNS = [
   { key: "date", label: "Date", width: "w-36" },
-  { key: "invoice", label: "N° Facture", width: "w-32" },
-  { key: "account", label: "Compte", width: "min-w-56" },
+  { key: "facture", label: "N° Facture", width: "w-32" },
+  { key: "compte", label: "Compte", width: "min-w-56" },
   { key: "debit", label: "Débit", width: "w-32", numeric: true },
   { key: "credit", label: "Crédit", width: "w-32", numeric: true },
   { key: "tva", label: "TVA", width: "w-24" },
@@ -29,11 +30,10 @@ const EntryRow = memo(function EntryRow({ line, index, canRemove, onChange, onRe
         {index + 1}
       </th>
       <td className="border-r p-0">
-        <input
-          type="date"
-          className={cellInput}
+        <DateInput
+          inputClassName={cellInput}
           value={line.date}
-          onChange={(e) => onChange(line.id, "date", e.target.value)}
+          onChange={(iso) => onChange(line.id, "date", iso)}
           {...cellProps(0)}
         />
       </td>
@@ -41,16 +41,16 @@ const EntryRow = memo(function EntryRow({ line, index, canRemove, onChange, onRe
         <input
           className={cellInput}
           placeholder="FA-…"
-          value={line.invoice}
-          onChange={(e) => onChange(line.id, "invoice", e.target.value)}
+          value={line.facture}
+          onChange={(e) => onChange(line.id, "facture", e.target.value)}
           {...cellProps(1)}
         />
       </td>
       <td className="border-r p-0">
         <select
-          className={cn(cellInput, "cursor-pointer", !line.account && "text-muted-foreground")}
-          value={line.account}
-          onChange={(e) => onChange(line.id, "account", e.target.value)}
+          className={cn(cellInput, "cursor-pointer", !line.compte && "text-muted-foreground")}
+          value={line.compte}
+          onChange={(e) => onChange(line.id, "compte", e.target.value)}
           {...cellProps(2)}
         >
           <option value="">Sélectionner…</option>

@@ -8,24 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { LEDGER_ENTRIES } from "@/data/mockData";
 import { ACCOUNT_LABELS } from "@/data/planComptable";
+import { downloadFile, toCSV } from "@/lib/csv";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 const LEDGER_ACCOUNTS = [...new Set(LEDGER_ENTRIES.map((entry) => entry.account))].sort();
 
-const CSV_HEADER = "Date,Pièce,Compte,Débit,Crédit";
-
-function downloadFile(content, filename, type) {
-  // BOM so Excel opens the UTF-8 file with accents intact.
-  const blob = new Blob(["\uFEFF", content], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
+const CSV_HEADER = ["Date", "Pièce", "Compte", "Débit", "Crédit"];
 
 export default function GrandLivre() {
   const [account, setAccount] = useState("all");
@@ -57,10 +45,8 @@ export default function GrandLivre() {
   }, [account, deferredQuery]);
 
   const handleExportCSV = () => {
-    const lines = rows.map((row) =>
-      [formatDate(row.date), row.piece, row.account, row.debit, row.credit].join(",")
-    );
-    downloadFile([CSV_HEADER, ...lines].join("\n"), "grand-livre-export.csv", "text/csv;charset=utf-8");
+    const lines = rows.map((row) => [formatDate(row.date), row.piece, row.account, row.debit, row.credit]);
+    downloadFile(toCSV(CSV_HEADER, lines), "grand-livre-export.csv");
   };
 
   return (
@@ -69,7 +55,7 @@ export default function GrandLivre() {
         description="Détail des mouvements par compte avec solde progressif."
         actions={
           <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={rows.length === 0}>
-            <Download aria-hidden="true" /> Export CSV
+            <Download aria-hidden="true" /> Exporter en CSV
           </Button>
         }
       />

@@ -1,41 +1,72 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toCents } from "@/lib/utils";
 
-const today = () => new Date().toISOString().slice(0, 10);
+export const DRAFT_STORAGE_KEY = "saisie_comptable_draft";
 
-function createLine(previous) {
-  return {
-    id: crypto.randomUUID(),
-    date: previous?.date ?? today(),
-    invoice: previous?.invoice ?? "",
-    account: "",
-    debit: "",
-    credit: "",
-    tva: previous?.tva ?? "20",
-  };
+let lineSequence = 0;
+
+/** Date.now() alone collides when two lines are created in the same millisecond. */
+const createLineId = () => `line-${Date.now()}-${(lineSequence += 1)}`;
+
+/** Amounts stay strings while typing ("12," is a valid intermediate state); they become numbers in the payload. */
+export function createEmptyLine() {
+  return { id: createLineId(), date: "", facture: "", compte: "", debit: "", credit: "", tva: "20" };
+}
+
+export const hasAmount = (line) => toCents(line.debit) !== 0 || toCents(line.credit) !== 0;
+
+export const isLineBlank = (line) =>
+  !line.date && !line.facture.trim() && !line.compte && !line.debit.trim() && !line.credit.trim();
+
+function readDraft() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY));
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    const fields = ["date", "facture", "compte", "debit", "credit", "tva"];
+    return parsed
+      .filter((line) => line && typeof line.id === "string")
+      .map((line) => {
+        const restored = { ...createEmptyLine(), id: line.id };
+        fields.forEach((field) => typeof line[field] === "string" && (restored[field] = line[field]));
+        return restored;
+      });
+  } catch {
+    return null;
+  }
 }
 
 export function useJournalLines() {
-  const [lines, setLines] = useState(() => [createLine()]);
+  const [journalLines, setJournalLines] = useState(() => readDraft() ?? [createEmptyLine()]);
+
+  // A blank grid removes the key, so a completed save leaves no stale draft behind.
+  useEffect(() => {
+    if (journalLines.every(isLineBlank)) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } else {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(journalLines));
+    }
+  }, [journalLines]);
 
   const updateLine = useCallback((id, field, value) => {
-    setLines((current) => current.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
+    setJournalLines((current) => current.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
   }, []);
 
-  /** New lines inherit date, invoice number and TVA from the last line, like a spreadsheet fill-down. */
   const addLine = useCallback(() => {
-    setLines((current) => [...current, createLine(current.at(-1))]);
+    setJournalLines((current) => [...current, createEmptyLine()]);
   }, []);
 
   const removeLine = useCallback((id) => {
-    setLines((current) => (current.length > 1 ? current.filter((line) => line.id !== id) : current));
+    setJournalLines((current) => (current.length > 1 ? current.filter((line) => line.id !== id) : current));
   }, []);
 
-  const reset = useCallback(() => setLines([createLine()]), []);
+  const reset = useCallback(() => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setJournalLines([createEmptyLine()]);
+  }, []);
 
   const totals = useMemo(() => {
-    const debit = lines.reduce((sum, line) => sum + toCents(line.debit), 0);
-    const credit = lines.reduce((sum, line) => sum + toCents(line.credit), 0);
+    const debit = journalLines.reduce((sum, line) => sum + toCents(line.debit), 0);
+    const credit = journalLines.reduce((sum, line) => sum + toCents(line.credit), 0);
     return {
       debit: debit / 100,
       credit: credit / 100,
@@ -43,7 +74,7 @@ export function useJournalLines() {
       isBalanced: debit === credit,
       isEmpty: debit === 0 && credit === 0,
     };
-  }, [lines]);
+  }, [journalLines]);
 
-  return { lines, totals, updateLine, addLine, removeLine, reset };
+  return { journalLines, totals, updateLine, addLine, removeLine, reset };
 }

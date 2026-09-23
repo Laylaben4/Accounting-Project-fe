@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Calculator, ChevronLeft, LogOut, X } from "lucide-react";
+import { Calculator, LogOut, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/layouts/navigation";
@@ -30,7 +30,7 @@ function UserProfile({ collapsed, onExpand }) {
 
   return (
     <div className="overflow-hidden border-t border-slate-800 p-3">
-      {/* Collapsed (desktop only): avatar alone; clicking it re-expands the sidebar to reach Log Out. */}
+      {/* Collapsed (desktop only): avatar alone; clicking it re-expands the sidebar to reach the logout button. */}
       <button
         type="button"
         onClick={onExpand}
@@ -58,14 +58,14 @@ function UserProfile({ collapsed, onExpand }) {
           className="flex w-full items-center justify-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <LogOut className="size-4" aria-hidden="true" />
-          Log Out
+          Se déconnecter
         </button>
       </div>
     </div>
   );
 }
 
-export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) {
+export function Sidebar({ collapsed, onExpand, mobileOpen, onCloseMobile }) {
   return (
     <>
       <div
@@ -109,21 +109,6 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          aria-expanded={!collapsed}
-          aria-controls="app-sidebar"
-          title={collapsed ? "Développer le menu" : "Réduire le menu"}
-          className="absolute -right-3 top-5 hidden size-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
-        >
-          <ChevronLeft
-            className={cn("size-4 transition-transform duration-200", collapsed && "rotate-180")}
-            aria-hidden="true"
-          />
-          <span className="sr-only">{collapsed ? "Développer le menu" : "Réduire le menu"}</span>
-        </button>
-
         <nav aria-label="Navigation principale" className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
           <ul className="space-y-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
@@ -151,7 +136,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
           </ul>
         </nav>
 
-        <UserProfile collapsed={collapsed} onExpand={onToggleCollapsed} />
+        <UserProfile collapsed={collapsed} onExpand={onExpand} />
       </aside>
     </>
   );

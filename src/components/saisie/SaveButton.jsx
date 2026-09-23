@@ -1,16 +1,19 @@
-import { FilePen, Save } from "lucide-react";
+import { FilePen, LoaderCircle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function SaveButton({ isBalanced, disabled }) {
+/** Unbalanced entries can't be saved; they stay as a local draft until the écart is fixed. */
+export function SaveButton({ isBalanced, disabled, saving = false }) {
+  const Icon = saving ? LoaderCircle : isBalanced ? Save : FilePen;
   return (
     <Button
       type="submit"
       variant={isBalanced ? "default" : "warning"}
-      disabled={disabled}
+      disabled={disabled || saving}
+      aria-busy={saving}
       className="min-w-44"
     >
-      {isBalanced ? <Save aria-hidden="true" /> : <FilePen aria-hidden="true" />}
-      {isBalanced ? "Save" : "Save as Draft / Brouillon"}
+      <Icon className={saving ? "animate-spin" : undefined} aria-hidden="true" />
+      {isBalanced ? "Enregistrer" : "Brouillon"}
     </Button>
   );
 }

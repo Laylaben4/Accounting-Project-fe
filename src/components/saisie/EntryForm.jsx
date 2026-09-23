@@ -1,25 +1,58 @@
 import { useState } from "react";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toaster";
 import { EntryGrid } from "@/components/saisie/EntryGrid";
 import { SaveButton } from "@/components/saisie/SaveButton";
-import { useJournalLines } from "@/hooks/useJournalLines";
+import { hasAmount } from "@/hooks/useJournalLines";
 import { formatCurrency } from "@/lib/utils";
+import { buildJournalPayload, saveJournalEntry } from "@/services/journalApi";
 
-export function EntryForm() {
-  const { lines, totals, updateLine, addLine, removeLine, reset } = useJournalLines();
-  const [status, setStatus] = useState("");
+/** @param journal Return value of useJournalLines(), owned by the Saisie page so the PDF preview shares it. */
+export function EntryForm({ journal }) {
+  const { journalLines, totals, updateLine, addLine, removeLine, reset } = journal;
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
-    if (totals.isEmpty) return;
-    const piece = lines[0].invoice || "sans numéro";
-    setStatus(
-      totals.isBalanced
-        ? `Écriture ${piece} enregistrée (${lines.length} lignes).`
-        : `Écriture ${piece} enregistrée en brouillon (écart de ${formatCurrency(Math.abs(totals.difference))}).`
-    );
-    reset();
+    if (saving || totals.isEmpty) return;
+
+    const { debit: totalDebit, credit: totalCredit } = totals;
+    // isBalanced compares integer cents, so 0.1 + 0.2 still equals 0.3.
+    if (!totals.isBalanced) {
+      toast({
+        variant: "error",
+        title: "Écriture non équilibrée",
+        description: `Débit ${formatCurrency(totalDebit)} / Crédit ${formatCurrency(totalCredit)} : écart de ${formatCurrency(Math.abs(totals.difference))}. Enregistrement bloqué, le brouillon reste sauvegardé sur cet appareil.`,
+      });
+      return;
+    }
+
+    const incompleteIndex = journalLines.findIndex((line) => hasAmount(line) && (!line.date || !line.compte));
+    if (incompleteIndex !== -1) {
+      toast({
+        variant: "error",
+        title: "Ligne incomplète",
+        description: `Ligne ${incompleteIndex + 1} : la date et le compte sont obligatoires.`,
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const saved = await saveJournalEntry(buildJournalPayload(journalLines));
+      toast({
+        variant: "success",
+        title: "Écriture enregistrée",
+        description: `${saved.lines.length} ligne${saved.lines.length > 1 ? "s" : ""} · ${formatCurrency(totalDebit)}`,
+      });
+      reset();
+    } catch {
+      toast({ variant: "error", title: "Échec de l'enregistrement", description: "Veuillez réessayer." });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -44,9 +77,9 @@ export function EntryForm() {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col p-3">
+      <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col p-3">
         <EntryGrid
-          lines={lines}
+          lines={journalLines}
           totals={totals}
           onChange={updateLine}
           onAdd={addLine}
@@ -54,10 +87,7 @@ export function EntryForm() {
         />
 
         <div className="mt-3 flex flex-wrap items-center justify-end gap-3 border-t pt-3">
-          <p role="status" aria-live="polite" className="mr-auto text-sm text-muted-foreground">
-            {status}
-          </p>
-          <SaveButton isBalanced={totals.isBalanced} disabled={totals.isEmpty} />
+          <SaveButton isBalanced={totals.isBalanced} disabled={totals.isEmpty} saving={saving} />
         </div>
       </form>
     </section>

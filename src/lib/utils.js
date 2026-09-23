@@ -5,13 +5,13 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-const currencyFormatter = new Intl.NumberFormat("fr-MA", {
+const currencyFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
   currency: "MAD",
   minimumFractionDigits: 2,
 });
 
-const compactFormatter = new Intl.NumberFormat("fr-MA", {
+const compactFormatter = new Intl.NumberFormat("fr-FR", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
@@ -33,7 +33,7 @@ export function toCents(raw) {
 }
 
 export function formatDate(iso) {
-  return new Date(iso).toLocaleDateString("fr-MA", {
+  return new Date(iso).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

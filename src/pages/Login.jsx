@@ -40,7 +40,7 @@ export default function Login() {
         <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Adresse e-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -76,11 +76,11 @@ export default function Login() {
 
             <Button type="submit" className="w-full" disabled={submitting || !email || !password}>
               {submitting && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-              Sign In
+              Se connecter
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
-              Démo : n'importe quel email + mot de passe de 4 caractères minimum.
+              Démo : n'importe quelle adresse e-mail + mot de passe de 4 caractères minimum.
             </p>
           </form>
         </CardContent>

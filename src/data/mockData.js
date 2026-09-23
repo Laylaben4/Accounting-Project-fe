@@ -1,3 +1,5 @@
+import { addDays, parseISODate, todayISO } from "@/lib/dateRange";
+
 /** Amounts are in MAD. */
 export const LEDGER_ENTRIES = [
   { id: 1, date: "2026-01-05", piece: "FA-2026-001", account: "3421", label: "Facture client Atlas SARL", debit: 24000, credit: 0 },
@@ -22,14 +24,40 @@ export const LEDGER_ENTRIES = [
   { id: 20, date: "2026-03-15", piece: "BQ-0131", account: "3421", label: "Acompte Oasis Tech", debit: 0, credit: 18000 },
 ];
 
-export const MONTHLY_REVENUE = [
-  { month: "Avr", value: 182000 },
-  { month: "Mai", value: 205000 },
-  { month: "Juin", value: 198000 },
-  { month: "Juil", value: 241000 },
-  { month: "Août", value: 226000 },
-  { month: "Sept", value: 289000 },
-];
+export const DATA_START_DATE = "2025-01-01";
+
+/** Seeded PRNG so the mock series is identical on every load. */
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildDailyFinancials() {
+  const random = mulberry32(2026);
+  const end = todayISO();
+  const days = [];
+  for (let iso = DATA_START_DATE, index = 0; iso <= end; iso = addDays(iso, 1), index += 1) {
+    const date = parseISODate(iso);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const trend = 1 + index / 1200;
+    const seasonality = 1 + 0.12 * Math.sin((date.getMonth() / 12) * 2 * Math.PI);
+    const revenue = Math.round((isWeekend ? 1500 : 9500) * trend * seasonality * (0.7 + random() * 0.6));
+    days.push({
+      date: iso,
+      revenue,
+      charges: Math.round(revenue * (0.62 + random() * 0.16)),
+      invoices: isWeekend ? Number(random() < 0.3) : 1 + Math.floor(random() * 3),
+    });
+  }
+  return days;
+}
+
+/** One row per calendar day, amounts HT in MAD. */
+export const DAILY_FINANCIALS = buildDailyFinancials();
 
 export const RECENT_ENTRIES = [
   { id: "EC-1042", date: "2026-09-21", piece: "FA-2026-118", label: "Vente Oasis Tech", amount: 36000, status: "validated" },

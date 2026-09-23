@@ -16,6 +16,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   const toggleCollapsed = useCallback(() => setCollapsed((value) => !value), []);
+  const expandSidebar = useCallback(() => setCollapsed(false), []);
   const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
 
   return (
@@ -29,12 +30,13 @@ export default function DashboardLayout() {
 
       <Sidebar
         collapsed={collapsed}
-        onToggleCollapsed={toggleCollapsed}
+        onExpand={expandSidebar}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={closeMobileSidebar}
       />
       <Header
         collapsed={collapsed}
+        onToggleCollapsed={toggleCollapsed}
         sidebarOpen={mobileSidebarOpen}
         onOpenSidebar={() => setMobileSidebarOpen(true)}
       />

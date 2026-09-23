@@ -3,16 +3,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { EntryForm } from "@/components/saisie/EntryForm";
 import { InvoiceViewer } from "@/components/saisie/InvoiceViewer";
 import { SaisieToolbar } from "@/components/saisie/SaisieToolbar";
+import { useJournalLines } from "@/hooks/useJournalLines";
 import { cn } from "@/lib/utils";
 
 export default function SaisieComptable() {
   const [swapped, setSwapped] = useState(false);
   const [enlarged, setEnlarged] = useState(false);
+  const journal = useJournalLines();
 
-  // Keyed children let React move the real DOM nodes on swap (tab order follows the visual order)
-  // while keeping the form's state mounted.
-  const viewer = <InvoiceViewer key="viewer" />;
-  const form = <EntryForm key="form" />;
+  // Keyed children let React move the real DOM nodes on swap (tab order follows the visual order).
+  const viewer = <InvoiceViewer key="viewer" journalLines={journal.journalLines} />;
+  const form = <EntryForm key="form" journal={journal} />;
   const panels = enlarged ? [form] : swapped ? [form, viewer] : [viewer, form];
 
   return (
